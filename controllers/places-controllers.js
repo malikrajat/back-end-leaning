@@ -4,6 +4,7 @@ const getCoordsForAddress = require("../util/location");
 const mongoose = require("mongoose");
 const Place = require("../models/place");
 const User = require("../models/user");
+const fs = require("fs");
 
 let DUMMY_PLACES = [
   {
@@ -83,8 +84,7 @@ const createPlace = async (req, res, next) => {
     description,
     address,
     location: coordinates,
-    image:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Empire_State_Building_%28aerial_view%29.jpg/400px-Empire_State_Building_%28aerial_view%29.jpg",
+    image: req.file.path,
     creator
   });
   let user;
@@ -160,6 +160,7 @@ const deletePlace = async (req, res, next) => {
   if (!place) {
     return next(new HttpError("Could not find place for this id.", 404));
   }
+  const imagePath = req.file.path;
   try {
     // await Place.remove();
     const sess = await mongoose.startSession();
@@ -171,7 +172,10 @@ const deletePlace = async (req, res, next) => {
   } catch (error) {
     new HttpError("Something went wrong, could not delete place ", 500);
   }
-  res.status(200).json({ message: "Deleted place." });
+  fs.unlink(imagePath, err => {
+    console.log(err);
+    res.status(200).json({ message: "Deleted place." });
+  });
 };
 
 exports.getPlaceById = getPlaceById;
